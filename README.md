@@ -1,4 +1,3 @@
-# DiskDataCache
 This is a tool to cache data in disk.
 
 # DiskDataCacher磁盘缓存工具用法以及原理  
