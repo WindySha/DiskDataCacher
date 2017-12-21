@@ -12,6 +12,7 @@ by **Windy**
  - 支持扩展，扩展后可以缓存`JsonObject`、`Bitmap`、`Drawable`和序列化的java对象等等。
  
 ##对比**[ASimpleCache][1]**和**[DiskLruCache][2]**
+
 &emsp;跟`ASimpleCache`比较，优点主要有：
 
  - 两者都是给予LRU（最近最少使用）算法，但`ASimpleCache`是使用HashMap实现lru，而`DiskDataCacher`是使用排序好的`LinkedHashMap`实现lru算法，查询过期数据的效率更高；
@@ -26,6 +27,7 @@ by **Windy**
 
  
 ##用法简介
+
 `DiskStringCacheManager`是专门用来缓存字符串的工具，是单例模式，一般在Application的onCreate中进行初始化：
 ```
     @Override
@@ -59,7 +61,9 @@ by **Windy**
     String result = DiskStringCacheManager.get().get(cacheKey);
 ```
 ##源码剖析
+
 ###初始化方法实现思路：
+
 初始化时，遍历缓存目录下的所有缓存文件，并读取出文件起始段的信息，此信息包含缓存文件大小，缓存有效期，缓存的键值，并将这些信息和缓存文件上次修改时间(LastModifiedTime)存到一个List中，然后将此list根据文件上次修改时间进行排序，排序好后，存到全局变量LinkedHashMap mCacheInfoMap中，这个map用于LRU算法获取缓存，具体的初始化实现如下：
 ```
         ...
@@ -105,6 +109,7 @@ by **Windy**
         }
 ```
 ###get方法实现思路：
+
 先根据key从mCacheInfoMap中取缓存信息（mCacheInfoMap是一个LinkedHashMap，调用其get方法后，这个键值对就会添加到链表尾部成为最新的元素，以此实现LRU），然后根据key获取缓存文件名，从缓存文件中读取缓存内容，并将内容返回，以此实现get方法：
 ```
     @Override
@@ -150,6 +155,7 @@ by **Windy**
 ```
 
 ###put方法实现思路：
+
 存储数据之前，需要先判断存储数据到本地磁盘后，是否会超出允许的最大存阈值，即mMaxCacheSizeInBytes，超出的话，就先遍历mCacheInfoMap一遍，删除所有的过期数据，再次判断是否超出最大阈值mMaxCacheSizeInBytes，超出的话，删除mCacheInfoMap中最老的数据，直到不再超出阈值，具体代码如下：
 ```
     private void trimToMaxSize(int neededSpace) {
