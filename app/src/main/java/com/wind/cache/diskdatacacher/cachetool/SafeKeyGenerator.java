@@ -16,8 +16,6 @@ class SafeKeyGenerator {
     Charset CHARSET = Charset.forName(STRING_CHARSET_NAME);
 
     private static final char[] HEX_CHAR_ARRAY = "0123456789abcdef".toCharArray();
-    // 32 bytes from sha-256 -> 64 hex chars.
-    private static final char[] SHA_256_CHARS = new char[64];
 
     private final LruCache<String, String> loadIdToSafeHash = new LruCache(1000);
 
@@ -26,13 +24,9 @@ class SafeKeyGenerator {
 
     public String getSafeKey(String key) {
         String safeKey;
-        synchronized (loadIdToSafeHash) {
-            safeKey = loadIdToSafeHash.get(key);
-        }
+        safeKey = loadIdToSafeHash.get(key);
         if (safeKey == null) {
             safeKey = calculateHexStringDigest(key);
-        }
-        synchronized (loadIdToSafeHash) {
             loadIdToSafeHash.put(key, safeKey);
         }
         return safeKey;
@@ -42,26 +36,22 @@ class SafeKeyGenerator {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.update(key.getBytes(CHARSET));
-            return sha256BytesToHex(messageDigest.digest());
+            return bytesToHex(messageDigest.digest());
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    public static String sha256BytesToHex(byte[] bytes) {
-        synchronized (SHA_256_CHARS) {
-            return bytesToHex(bytes, SHA_256_CHARS);
-        }
-    }
-
     // Taken from:
-    // http://stackoverflow.com/questions/9655181/convert-from-byte-array-to-hex-string-in-java
-    // /9655275#9655275
+    // http://stackoverflow.com/questions/9655181/convert-from-byte-array-to-hex-string-in-java/9655275#9655275
+    //copyed from Glide, com.bumptech.glide.load.engine.cache.SafeKeyGenerator
     @SuppressWarnings("PMD.UseVarargs")
-    private static String bytesToHex(byte[] bytes, char[] hexChars) {
+    private static String bytesToHex(byte[] bytes) {
         int v;
-        for (int j = 0; j < bytes.length; j++) {
+        int length = bytes.length;
+        char[] hexChars = new char[length * 2];
+        for (int j = 0; j < length; j++) {
             v = bytes[j] & 0xFF;
             hexChars[j * 2] = HEX_CHAR_ARRAY[v >>> 4];
             hexChars[j * 2 + 1] = HEX_CHAR_ARRAY[v & 0x0F];
