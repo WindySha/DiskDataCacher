@@ -1,17 +1,16 @@
 This is a tool to cache data in disk.
 
 # DiskDataCacher磁盘缓存工具用法以及原理  
-by **Windy**
-标签（空格分隔）： 磁盘缓存 工具 Android DiskCache
+
 
 `DiskDataCacher`是一个轻量级的Android磁盘缓存工具
-##工具用途
+## 工具用途
 
  - 用于缓存网络请求返回的数据，并且可以设置缓存数据的有效期，比如，缓存时间假设为1个小时，超时1小时后再次获取缓存会自动失效，让客户端重新请求新的数据，这样可以减少客户端流量，同时减少服务器并发量。
  - 用于代替`SharePreference`当做配置文件，缓存一些较大的配置数据，效率更高，可以减少内存消耗。
  - 支持扩展，扩展后可以缓存`JsonObject`、`Bitmap`、`Drawable`和序列化的java对象等等。
  
-##对比**[ASimpleCache][1]**和**[DiskLruCache][2]**
+## 对比**[ASimpleCache][1]**和**[DiskLruCache][2]**
 
 &emsp;跟`ASimpleCache`比较，优点主要有：
 
@@ -26,7 +25,7 @@ by **Windy**
  - `DiskDataCacher`实现方式更简单，使用更轻量，并不需要一个journal文件记录数据操作情况
 
  
-##用法简介
+## 用法简介
 
 `DiskStringCacheManager`是专门用来缓存字符串的工具，是单例模式，一般在Application的onCreate中进行初始化：
 ```
@@ -60,9 +59,9 @@ by **Windy**
     //同步方式获取
     String result = DiskStringCacheManager.get().get(cacheKey);
 ```
-##源码剖析
+## 源码剖析
 
-###初始化方法实现思路：
+### 初始化方法实现思路：
 
 初始化时，遍历缓存目录下的所有缓存文件，并读取出文件起始段的信息，此信息包含缓存文件大小，缓存有效期，缓存的键值，并将这些信息和缓存文件上次修改时间(LastModifiedTime)存到一个List中，然后将此list根据文件上次修改时间进行排序，排序好后，存到全局变量LinkedHashMap mCacheInfoMap中，这个map用于LRU算法获取缓存，具体的初始化实现如下：
 ```
@@ -108,7 +107,7 @@ by **Windy**
             }
         }
 ```
-###get方法实现思路：
+### get方法实现思路：
 
 先根据key从mCacheInfoMap中取缓存信息（mCacheInfoMap是一个LinkedHashMap，调用其get方法后，这个键值对就会添加到链表尾部成为最新的元素，以此实现LRU），然后根据key获取缓存文件名，从缓存文件中读取缓存内容，并将内容返回，以此实现get方法：
 ```
@@ -154,7 +153,7 @@ by **Windy**
     }
 ```
 
-###put方法实现思路：
+### put方法实现思路：
 
 存储数据之前，需要先判断存储数据到本地磁盘后，是否会超出允许的最大存阈值，即mMaxCacheSizeInBytes，超出的话，就先遍历mCacheInfoMap一遍，删除所有的过期数据，再次判断是否超出最大阈值mMaxCacheSizeInBytes，超出的话，删除mCacheInfoMap中最老的数据，直到不再超出阈值，具体代码如下：
 ```
@@ -230,7 +229,7 @@ by **Windy**
 ```
 以上就是DiskDataCacher主要的实现思路
 
-##总结
+## 总结
 
  1. 通过以上源码分析，容易知道，在get put方法一定要在初始化方法(`initialize()`)完成之后进行，因此，代码中使用了mLock.wait()和mLock.notifyAll()方法对此进行控制，`initialize()`方法最好在Application的onCreate中调用。
  2. 因为是磁盘缓存，当存储较大数据时，磁盘读写会比较耗时，因此需要在工作线程中执行，代码中已经封装好了一个工具`DiskStringCacheManager`，实现了对字符串的缓存以及线程池的封装。
