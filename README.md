@@ -1,4 +1,3 @@
-This is a tool to cache data in disk.
 
 # DiskDataCacher磁盘缓存工具用法以及原理  
 
@@ -10,7 +9,7 @@ This is a tool to cache data in disk.
  - 用于代替`SharePreference`当做配置文件，缓存一些较大的配置数据，效率更高，可以减少内存消耗。
  - 支持扩展，扩展后可以缓存`JsonObject`、`Bitmap`、`Drawable`和序列化的java对象等等。
  
-## 对比**[ASimpleCache][1]**和**[DiskLruCache][2]**
+## 对比[ASimpleCache][1]和[DiskLruCache][2]
 
 &emsp;跟`ASimpleCache`比较，优点主要有：
 
